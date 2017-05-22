@@ -25,6 +25,7 @@ export declare class JsonApiDatastore {
     peekAll<T extends JsonApiModel>(modelType: ModelType<T>): T[];
     headers: Headers;
     private buildUrl<T>(modelType, params?, id?);
+    private getBelongsToRelationships(data);
     private getRelationships(data);
     private extractQueryData<T>(res, modelType, withMeta?);
     private extractRecordData<T>(res, modelType, model?);

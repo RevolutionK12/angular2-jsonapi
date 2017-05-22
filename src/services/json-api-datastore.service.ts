@@ -15,7 +15,6 @@ export type ModelType<T extends JsonApiModel> = { new(datastore: JsonApiDatastor
 
 @Injectable()
 export class JsonApiDatastore {
-
     private _headers: Headers;
     private _store: any = {};
 
@@ -55,7 +54,7 @@ export class JsonApiDatastore {
         let modelType = <ModelType<T>>model.constructor;
         let typeName: string = Reflect.getMetadata('JsonApiModelConfig', modelType).type;
         let options: RequestOptions = this.getOptions(headers);
-        let relationships: any = !model.id ? this.getRelationships(model) : undefined;
+        let relationships: any = !model.id ? this.getRelationships(model) : this.getBelongsToRelationships(model);
         let url: string = this.buildUrl(modelType, params, model.id);
         let dirtyData: any = {};
         for (let propertyName in attributesMetadata) {
@@ -110,9 +109,29 @@ export class JsonApiDatastore {
 
     private buildUrl<T extends JsonApiModel>(modelType: ModelType<T>, params?: any, id?: string): string {
         let typeName: string = Reflect.getMetadata('JsonApiModelConfig', modelType).type;
+        typeName = typeName.replace(/([A-Z])/g, function($1){return "-"+$1.toLowerCase();})
         let baseUrl: string = Reflect.getMetadata('JsonApiDatastoreConfig', this.constructor).baseUrl;
         let idToken: string = id ? `/${id}` : null;
         return [baseUrl, typeName, idToken, (params ? '?' : ''), this.toQueryString(params)].join('');
+    }
+
+    private getBelongsToRelationships(data: any): any {
+        let relationships: any;
+        for (let key in data) {
+            if (data.hasOwnProperty(key)) {
+                if (data[key] instanceof JsonApiModel) {
+                    relationships = relationships || {};
+                    let relationshipType: string = Reflect.getMetadata('JsonApiModelConfig', data[key].constructor).type;
+                    relationships[key] = {
+                        data: {
+                            type: relationshipType,
+                            id: data[key].id
+                        }
+                    };
+                }
+            }
+        }
+        return relationships;
     }
 
     private getRelationships(data: any): any {

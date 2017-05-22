@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var JsonApiMetaModel = (function () {
     function JsonApiMetaModel() {
         this.links = [];
+        this.meta = [];
     }
     return JsonApiMetaModel;
 }());

@@ -1,13 +1,4 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 var _ = require("lodash");
 var core_1 = require("@angular/core");
@@ -57,7 +48,7 @@ var JsonApiDatastore = (function () {
         var modelType = model.constructor;
         var typeName = Reflect.getMetadata('JsonApiModelConfig', modelType).type;
         var options = this.getOptions(headers);
-        var relationships = !model.id ? this.getRelationships(model) : undefined;
+        var relationships = !model.id ? this.getRelationships(model) : this.getBelongsToRelationships(model);
         var url = this.buildUrl(modelType, params, model.id);
         var dirtyData = {};
         for (var propertyName in attributesMetadata) {
@@ -113,9 +104,28 @@ var JsonApiDatastore = (function () {
     });
     JsonApiDatastore.prototype.buildUrl = function (modelType, params, id) {
         var typeName = Reflect.getMetadata('JsonApiModelConfig', modelType).type;
+        typeName = typeName.replace(/([A-Z])/g, function ($1) { return "-" + $1.toLowerCase(); });
         var baseUrl = Reflect.getMetadata('JsonApiDatastoreConfig', this.constructor).baseUrl;
         var idToken = id ? "/" + id : null;
         return [baseUrl, typeName, idToken, (params ? '?' : ''), this.toQueryString(params)].join('');
+    };
+    JsonApiDatastore.prototype.getBelongsToRelationships = function (data) {
+        var relationships;
+        for (var key in data) {
+            if (data.hasOwnProperty(key)) {
+                if (data[key] instanceof json_api_model_1.JsonApiModel) {
+                    relationships = relationships || {};
+                    var relationshipType = Reflect.getMetadata('JsonApiModelConfig', data[key].constructor).type;
+                    relationships[key] = {
+                        data: {
+                            type: relationshipType,
+                            id: data[key].id
+                        }
+                    };
+                }
+            }
+        }
+        return relationships;
     };
     JsonApiDatastore.prototype.getRelationships = function (data) {
         var relationships;
@@ -288,9 +298,12 @@ var JsonApiDatastore = (function () {
     ;
     return JsonApiDatastore;
 }());
-JsonApiDatastore = __decorate([
-    core_1.Injectable(),
-    __metadata("design:paramtypes", [http_1.Http])
-], JsonApiDatastore);
+JsonApiDatastore.decorators = [
+    { type: core_1.Injectable },
+];
+/** @nocollapse */
+JsonApiDatastore.ctorParameters = function () { return [
+    { type: http_1.Http, },
+]; };
 exports.JsonApiDatastore = JsonApiDatastore;
 //# sourceMappingURL=json-api-datastore.service.js.map
