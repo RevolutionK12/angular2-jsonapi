@@ -15,6 +15,7 @@ export type ModelType<T extends JsonApiModel> = { new(datastore: JsonApiDatastor
 
 @Injectable()
 export class JsonApiDatastore {
+    private _baseUrl: string;
     private _headers: Headers;
     private _store: any = {};
 
@@ -107,12 +108,15 @@ export class JsonApiDatastore {
         this._headers = headers;
     }
 
+    set baseUrl(baseUrl: string) {
+        this._baseUrl = baseUrl;
+    }
+
     private buildUrl<T extends JsonApiModel>(modelType: ModelType<T>, params?: any, id?: string): string {
         let typeName: string = Reflect.getMetadata('JsonApiModelConfig', modelType).type;
         typeName = typeName.replace(/([A-Z])/g, function($1){return "-"+$1.toLowerCase();})
-        let baseUrl: string = Reflect.getMetadata('JsonApiDatastoreConfig', this.constructor).baseUrl;
         let idToken: string = id ? `/${id}` : null;
-        return [baseUrl, typeName, idToken, (params ? '?' : ''), this.toQueryString(params)].join('');
+        return [this._baseUrl, typeName, idToken, (params ? '?' : ''), this.toQueryString(params)].join('');
     }
 
     private getBelongsToRelationships(data: any): any {
@@ -310,9 +314,4 @@ export class JsonApiDatastore {
         }
         return model;
     }
-
-    public setBaseUrl(baseUrl: string): void {
-        Reflect.getMetadata('JsonApiDatastoreConfig', this.constructor).baseUrl = baseUrl;
-    }
-
 }
