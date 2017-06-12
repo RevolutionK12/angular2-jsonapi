@@ -309,6 +309,10 @@ export class JsonApiDatastore {
             }
         }
         return model;
-    };
+    }
+
+    public setBaseUrl(baseUrl: string): void {
+        Reflect.getMetadata('JsonApiDatastoreConfig', this.constructor).baseUrl = baseUrl;
+    }
 
 }
